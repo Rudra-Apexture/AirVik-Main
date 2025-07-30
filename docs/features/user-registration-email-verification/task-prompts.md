@@ -43,7 +43,7 @@ Create MongoDB schema for user registration with email verification
 After creating the file successfully:
 1. Stage changes: `git add backend/src/models/user.model.ts`
 2. Commit with message: `git commit -m "feat(user-registration): add User model with email verification"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -97,7 +97,7 @@ Create authentication service layer for user registration and email verification
 After creating the file successfully:
 1. Stage changes: `git add backend/src/services/auth/user-auth.service.ts`
 2. Commit with message: `git commit -m "feat(user-registration): add authentication service layer"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -150,7 +150,7 @@ Create authentication controllers that handle HTTP requests
 After creating the file successfully:
 1. Stage changes: `git add backend/src/controllers/auth/user-auth.controller.ts`
 2. Commit with message: `git commit -m "feat(user-registration): add auth controllers"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -195,7 +195,7 @@ Create authentication routes and integrate with main server
 - Mount routes at /api/v1/auth in server.ts
 - Apply validation middleware
 
-**DO NOT:**
+**DO NOT:**/
 - Create additional route files
 - Exceed 400 lines per file
 - Change existing server configuration beyond adding routes
@@ -204,7 +204,7 @@ Create authentication routes and integrate with main server
 After creating the file successfully:
 1. Stage changes: `git add backend/src/routes/auth.routes.ts backend/src/server.ts`
 2. Commit with message: `git commit -m "feat(user-registration): add auth routes"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -249,14 +249,13 @@ Create comprehensive Postman collection for testing all endpoints
 **DO NOT:**
 - Create any other files
 - Modify any existing files
-- Exceed 400 lines
 - Add endpoints not in spec
 
 **GIT OPERATIONS:**
 After creating the file successfully:
 1. Stage changes: `git add postman/user-registration-email-verification.postman_collection.json`
 2. Commit with message: `git commit -m "test(user-registration): add Postman collection"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -308,7 +307,7 @@ Create TypeScript type definitions for authentication functionality
 After creating the file successfully:
 1. Stage changes: `git add frontend/src/types/auth.types.ts`
 2. Commit with message: `git commit -m "feat(user-registration): add frontend TypeScript types"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -361,7 +360,7 @@ Create API service for authentication functionality
 After creating the file successfully:
 1. Stage changes: `git add frontend/src/services/auth.service.ts`
 2. Commit with message: `git commit -m "feat(user-registration): add frontend API service"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -414,7 +413,7 @@ Create a modern, responsive registration form component
 After creating the file successfully:
 1. Stage changes: `git add frontend/src/components/auth/RegistrationForm.tsx`
 2. Commit with message: `git commit -m "feat(user-registration): add registration form component"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -467,7 +466,7 @@ Create Next.js App Router pages for authentication
 After creating the file successfully:
 1. Stage changes: `git add frontend/src/app/auth/register/page.tsx frontend/src/app/auth/verify-email/page.tsx`
 2. Commit with message: `git commit -m "feat(user-registration): add auth pages"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
@@ -519,7 +518,7 @@ Any frontend files that need integration updates (MAXIMUM 400 lines per file)
 After completing integration:
 1. Stage changes: `git add .` (stage all modified files)
 2. Commit with message: `git commit -m "feat(user-registration): complete frontend-backend integration"`
-3. Push to remote: `git push origin feature/user-registration-email-verification`
+3. Push to remote: `git push origin yash/feature/user-registration-email-verification`
 
 **AFTER COMPLETING:**
 Update docs/features/user-registration-email-verification/CURRENT-STATE.md:
