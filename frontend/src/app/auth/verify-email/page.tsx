@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { verifyEmail, resendVerification } from '@/src/services/auth.service';
 import { CircleCheckBig, CircleX, TriangleAlert } from 'lucide-react';
 import { FaCheck, FaExclamation } from 'react-icons/fa';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 interface VerifyEmailState {
@@ -64,28 +66,31 @@ export default function VerifyEmailPage() {
     toast(
       <div className="flex items-start p-4">
         <div className="flex-shrink-0">
-          <div className={`flex items-center justify-center size-12 rounded-full ${isError ? 'bg-red-500' : 'bg-green-500'}`}>
+          <div className={`flex items-center justify-center size-10 rounded-full ${isError ? 'bg-red-500' : 'bg-green-500'}`}>
             {isError ? (
-              <FaExclamation className="text-lg text-white" />
+              <FaExclamation className="text-white text-lg" />
             ) : (
-              <FaCheck className="text-lg text-white" />
+              <FaCheck className="text-white text-lg" />
             )}
           </div>
         </div>
-        <div className="ml-4">
+        <div className="ml-3">
           <h3 className="text-sm font-medium text-gray-900">
             {isError ? 'Verification Failed' : 'Success'}
           </h3>
-          <p className="text-sm text-gray-500">{message}</p>
+          <div className="mt-1 text-sm text-gray-500">
+            <p>{message}</p>
+          </div>
         </div>
       </div>,
       {
         duration: 5000,
         className: 'p-4 bg-white',
         style: {
-          padding: 0,
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+          border: '1px solid #DDDDDD',
+          borderRadius: '0.75rem',
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+          padding: '1rem',
         },
         icon: null
       }
@@ -225,179 +230,183 @@ export default function VerifyEmailPage() {
   // Success state
   if (state.isSuccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center lg:py-10 py-5">
+      <div className="min-h-screen bg-white flex flex-col justify-center lg:py-10 py-5 px-4">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white px-4">
-            <div className="text-center space-y-5">
-              <div className="mx-auto flex items-center justify-center flex-shrink-0">
-                <CircleCheckBig className="size-12 text-primary" />
-              </div>
-              <h2 className="lg:text-2xl text-xl font-bold">
-                Email Verified Successfully!
-              </h2>
-              <p className="text-gray-500">
-                Your email has been verified. You can now sign in to your AirVik account.
-              </p>
-              <p className="text-sm text-gray-500">
-                Redirecting to login page in 3 seconds...
-              </p>
+          <Card>
+            <CardContent>
+              <div className="text-center space-y-5">
+                <div className="mx-auto flex items-center justify-center flex-shrink-0">
+                  <CircleCheckBig className="size-12 text-primary" />
+                </div>
+                <h2 className="lg:text-2xl text-xl font-bold text-text">
+                  Email Verified Successfully!
+                </h2>
+                <p className="text-muted">
+                  Your email has been verified. You can now sign in to your AirVik account.
+                </p>
+                <p className="text-sm text-muted">
+                  Redirecting to login page in 3 seconds...
+                </p>
 
-              <Link
-                href="/auth/login"
-                className="w-full flex justify-center py-2.5 px-6 border border-transparent rounded-md text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground focus:outline-none transition-all duration-75 ease-linear"
-              >
-                Go to Login
-              </Link>
-            </div>
-          </div>
+                <Button
+                  asChild
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-md text-sm font-medium transition-all ease-linear duration-75"
+                >
+                  <Link href="/auth/login">
+                    Go to Login
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
-  // We'll handle the loading state in the main return
-
   // Error or token missing state
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center lg:py-10 py-5">
+    <div className="min-h-screen bg-white flex flex-col justify-center lg:py-10 py-5 px-4">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="text-center">
-          <h2 className="mt-6 text-2xl font-bold">Email Verification</h2>
-        </div>
-      </div>
+        <Card>
+          <CardContent>
+            <div className="text-center">
+              <h2 className="sm:text-3xl text-2xl font-bold text-text capitalize mb-6">Email Verification</h2>
+              
+              {state.isTokenMissing ? (
+                <>
+                  <div className="mx-auto flex items-center justify-center sm:size-14 size-12 rounded-full bg-yellow-200 mb-4">
+                    <TriangleAlert className='size-6 text-yellow-600' />
+                  </div>
+                  <h3 className="text-lg font-medium text-text mb-4">
+                    Verification Link Required
+                  </h3>
+                  <p className="text-muted mb-6">
+                    Please click the verification link in your email, or enter your email below to resend the verification email.
+                  </p>
+                </>
+              ) : state.error ? (
+                <>
+                  {/* verification failed */}
+                  <div className="mx-auto flex items-center justify-center rounded-full mb-4">
+                    <CircleX className="size-12 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-medium text-text mb-4">
+                    Verification Failed
+                  </h3>
+                  <p className="text-muted mb-6">{state.error}</p>
+                </>
+              ) : (
+                <>
+                  {/* Processing Verification */}
+                  <div className="mx-auto flex items-center justify-center size-12 rounded-full bg-blue-100 mb-4">
+                    <svg
+                      className="animate-spin h-6 w-6 text-blue-600"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-text mb-4">
+                    Processing Verification
+                  </h3>
+                  <p className="text-muted mb-6">
+                    Please wait while we verify your email address...
+                  </p>
+                </>
+              )}
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white px-4">
-          <div className="text-center">
-            {state.isTokenMissing ? (
-              <>
-                <div className="mx-auto flex items-center justify-center size-12 rounded-full bg-yellow-200 mb-4">
-                  <TriangleAlert className='size-6 text-yellow-600' />
-                </div>
-                <h3 className="text-lg font-medium mb-4">
-                  Verification Link Required
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  Please click the verification link in your email, or enter your email below to resend the verification email.
-                </p>
-              </>
-            ) : state.error ? (
-              <>
-                {/* verification failed */}
-                <div className="mx-auto flex items-center justify-center rounded-full mb-4">
-                  <CircleX className="size-12 text-red-600" />
-                </div>
-                <h3 className="text-xl font-medium text-gray-900 mb-4">
-                  Verification Failed
-                </h3>
-                <p className="text-gray-500 mb-6">{state.error}</p>
-              </>
-            ) : (
-              <>
-                {/* Processing Verification */}
-                <div className="mx-auto flex items-center justify-center size-12 rounded-full bg-blue-100 mb-4">
-                  <svg
-                    className="animate-spin h-6 w-6 text-blue-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
+              {/* Resend Verification Email */}
+              {(state.canResend || state.isTokenMissing) && (
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-text text-left mb-1">
+                      Email Address
+                    </label>
+                    <Input
+                      type="email"
+                      id="email"
+                      value={state.resendEmail}
+                      onChange={(e) => handleEmailChange(e.target.value)}
+                      placeholder="Enter your email address"
+                      className=""
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleResendVerification}
+                    disabled={state.isLoading || !state.resendEmail}
+                    className="w-full py-2 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                    {state.isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Sending...
+                      </div>
+                    ) : (
+                      'Resend Verification Email'
+                    )}
+                  </Button>
                 </div>
-                <h3 className="text-lg font-medium mb-4">
-                  Processing Verification
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  Please wait while we verify your email address...
-                </p>
-              </>
-            )}
+              )}
 
-
-            {/* Resend Verification Email */}
-            {(state.canResend || state.isTokenMissing) && (
-              <div className="space-y-2">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-text text-left mb-1">
-                    Email Address
-                  </label>
-                  <Input
-                    type="email"
-                    id="email"
-                    value={state.resendEmail}
-                    onChange={(e) => handleEmailChange(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="px-4 py-3 border rounded-md focus:outline-none"
-                  />
-                </div>
-
-                <button
-                  onClick={handleResendVerification}
-                  disabled={state.isLoading || !state.resendEmail}
-                  className="w-full py-3 px-6 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md text-sm font-medium transition-all duration-75 ease-linear disabled:opacity-50 disabled:cursor-not-allowed"
+              {/* Navigation Links */}
+              <div className="mt-6 space-y-3">
+                <Button
+                  variant="outline"
+                  asChild
+                  className="w-full py-2 px-4 text-sm rounded-md bg-gray-200 text-black/60 font-semibold transition-all duration-75 ease-linear"
                 >
-                  {state.isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Sending...
-                    </div>
-                  ) : (
-                    'Resend Verification Email'
-                  )}
-                </button>
+                  <Link href="/auth/register">
+                    Create New Account
+                  </Link>
+                </Button>
+
+                <Button
+                  asChild
+                  className="w-full text-white py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)]"
+                >
+                  <Link href="/auth/login">
+                    Back to Login
+                  </Link>
+                </Button>
               </div>
-            )}
-
-            {/* Create New Account */}
-            <div className="mt-6 space-y-3">
-              <Link
-                href="/auth/register"
-                className="w-full flex justify-center py-3 px-6 border rounded-md text-sm font-medium text-gray-700 bg-white focus:outline-none"
-              >
-                Create New Account
-              </Link>
-
-              <Link
-                href="/auth/login"
-                className="w-full flex justify-center py-3 px-6 rounded-md text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none transition-all duration-75 ease-linear"
-              >
-                Back to Login
-              </Link>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

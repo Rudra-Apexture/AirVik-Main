@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { FcGoogle } from 'react-icons/fc';
 import { FaCheck, FaCheckCircle, FaExclamation, FaExclamationCircle, FaTimesCircle } from 'react-icons/fa';
-import { Check, CircleCheckBig } from 'lucide-react';
+import { Check, CircleCheckBig, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface RegisterPageState {
@@ -41,7 +41,7 @@ export default function RegisterPage() {
     trigger,
     getValues,
   } = useForm<RegistrationFormData>({
-    mode: 'onChange',
+    mode: 'onSubmit',
   });
 
   const password = watch('password', '');
@@ -83,12 +83,19 @@ export default function RegisterPage() {
     (hasNumber || hasSpecialChar) &&
     hasNoPersonalInfo;
 
-  // Show validation messages if the user has ever interacted with the password field
-  const showValidation = hasInteracted;
+  // Show validation messages if the password field has content
+  const showValidation = password.length > 0;
 
   const onSubmit: SubmitHandler<RegistrationFormData> = async (data) => {
     // Using react-hook-form's handleSubmit already prevents default form submission
     setIsSubmitted(true);
+    
+    // Trigger validation for all fields including checkbox
+    const isValid = await trigger();
+    if (!isValid) {
+      return; // Don't proceed if validation fails
+    }
+    
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
@@ -272,7 +279,8 @@ export default function RegisterPage() {
         values.email &&
         values.password &&
         values.confirmPassword &&
-        values.password === values.confirmPassword;
+        values.password === values.confirmPassword &&
+        values.terms;
     }
     return true; // Return true by default to keep button enabled
   };
@@ -328,7 +336,7 @@ export default function RegisterPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Card>
           <CardContent>
-            <div className="text-left mb-6">
+            <div className="mb-8 space-y-1 text-center">
               <h2 className="sm:text-3xl text-2xl font-bold text-text capitalize">Create your account</h2>
               <p className="text-sm text-muted">Your next experience begins here.</p>
             </div>
@@ -348,7 +356,7 @@ export default function RegisterPage() {
                       })}
                       type="text"
                       autoComplete="given-name"
-                      className={`px-4 py-3 border rounded-md focus:outline-none ${errors.firstName ? 'border-red-500' : ''}`}
+                      className={errors.firstName ? 'border-red-500' : ''}
                       placeholder="First name"
                       onBlur={() => trigger('firstName')}
                     />
@@ -374,7 +382,7 @@ export default function RegisterPage() {
                       })}
                       type="text"
                       autoComplete="family-name"
-                      className={`px-4 py-3 border rounded-md focus:outline-none ${errors.lastName ? 'border-red-500' : ''}`}
+                      className={errors.lastName ? 'border-red-500' : ''}
                       placeholder="Last name"
                       onBlur={() => trigger('lastName')}
                     />
@@ -404,7 +412,7 @@ export default function RegisterPage() {
                     })}
                     type="email"
                     autoComplete="email"
-                    className={`px-4 py-3 border rounded-md focus:outline-none ${errors.email ? 'border-red-500' : ''}`}
+                                          className={errors.email ? 'border-red-500' : ''}
                     placeholder="Email"
                     onBlur={() => trigger('email')}
                   />
@@ -424,7 +432,7 @@ export default function RegisterPage() {
                     Password
                   </label>
                 </div>
-                <div className="relative">
+                                <div className="relative">
                   <Input
                     {...register('password', {
                       required: 'Password is required',
@@ -432,24 +440,22 @@ export default function RegisterPage() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder='Password'
                     autoComplete="new-password"
-                    className={`px-4 py-3.5 text-sm border ${errors.password ? 'border-red-500' : ''} rounded-md focus:outline-none pr-10`}
+                    className={`${errors.password ? 'border-red-500' : ''} pr-12`}
                     onFocus={() => {
                       setIsPasswordFocused(true);
-                      setHasInteracted(true);
                     }}
                     onBlur={() => {
                       setIsPasswordFocused(false);
-                      setHasInteracted(true);
                       trigger('password');
                     }}
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm font-medium underline"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
 
@@ -460,7 +466,7 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                {/* Password validation feedback - only show when focused or has content */}
+                {/* Password validation feedback - show when user starts typing */}
                 {showValidation && (
                   <div className="mt-2">
                     {isPasswordValid ? (
@@ -502,7 +508,7 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* Confirm Password */}
+                            {/* Confirm Password */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-text">
@@ -517,7 +523,7 @@ export default function RegisterPage() {
                     })}
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    className={`px-4 py-3.5 text-sm border ${errors.confirmPassword || (confirmPassword && !passwordsMatch) ? 'border-red-500' : ''} rounded-md focus:outline-none`}
+                    className={`${errors.confirmPassword || (confirmPassword && !passwordsMatch) ? 'border-red-500' : ''} pr-12`}
                     placeholder="Confirm password"
                     onFocus={() => setHasInteracted(true)}
                     onBlur={() => trigger('confirmPassword')}
@@ -531,27 +537,32 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              <div className="bg-white text-sm text-muted">
-                By creating an account, you agree to our{' '}
-                <Link href="/privacy-policy" className='text-primary font-medium hover:underline'>
-                  Privacy Policy
-                </Link>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="terms" />
-                  <Label htmlFor="terms" className="text-sm font-medium text-muted-foreground">
-                    Remember me
-                  </Label>
-                </div>
+              <div className="flex items-center space-x-2 cursor-pointer">
+                <Checkbox
+                  id="terms" 
+                  {...register('terms', {
+                    required: 'You must agree to the terms and conditions',
+                    validate: (value) => value === true || 'You must agree to the terms and conditions',
+                  })}
+                  className={errors.terms ? 'border-red-500' : ''}
+                />
+                <Label htmlFor="terms" className="text-sm font-medium text-muted-foreground">
+                  I agree to the{' '}
+                  <Link href="/privacy-policy" className='text-primary font-medium underline'>
+                    Privacy Policy
+                  </Link>
+                  {' '}and{' '}
+                  <Link href="/terms" className='text-primary font-medium underline'>
+                    Terms of Service
+                  </Link>
+                </Label>
               </div>
 
               <div>
                 <Button
                   type="submit"
-                  disabled={state.isLoading || (isSubmitted && (!isValid || !areAllFieldsFilled()))}
-                  className={`w-full py-2 px-6 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md text-sm font-medium transition-all duration-75 ease-linear ${state.isLoading || (isSubmitted && (!isValid || !areAllFieldsFilled())) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={state.isLoading}
+                  className={`w-full py-2 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] ${state.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {state.isLoading ? (
                     <div className="flex items-center">
@@ -595,7 +606,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <Button variant="outline" type="button" className="w-full  my-2">
+                <Button variant="outline" type="button" className="w-full my-2 bg-gray-300/60 border-0">
                   <FcGoogle className="mr-2" size={28} />
                   <span className='text-sm font-medium'>Sign in with Google</span>
                 </Button>
