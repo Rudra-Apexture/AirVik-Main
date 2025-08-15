@@ -254,7 +254,7 @@ export default function ResetPasswordPage() {
                 <div className="space-y-3">
                   <Button
                     asChild
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-md text-sm font-medium transition-all ease-linear duration-75"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 px-6 rounded-md text-sm font-medium transition-all ease-linear duration-75"
                   >
                     <Link href="/auth/forgot-password">
                       Request New Reset Link
@@ -264,7 +264,7 @@ export default function ResetPasswordPage() {
                   <Button
                     variant="outline"
                     asChild
-                    className="w-full py-2 px-4 text-sm rounded-md font-medium transition-all duration-75 ease-linear"
+                    className="w-full py-4 px-6 text-sm rounded-md font-medium transition-all duration-75 ease-linear"
                   >
                     <Link href="/auth/login">
                       Back to Login
@@ -303,7 +303,7 @@ export default function ResetPasswordPage() {
 
                 <Button
                   asChild
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-md text-sm font-medium transition-all ease-linear duration-75"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 px-6 rounded-md text-sm font-medium transition-all ease-linear duration-75"
                 >
                   <Link href="/auth/login">
                     Sign In
@@ -330,7 +330,7 @@ export default function ResetPasswordPage() {
             <form method="post" className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               {/* New Password field */}
               <div className="space-y-2">
-                <label htmlFor="newPassword" className="block text-sm font-medium text-text">
+                <label htmlFor="newPassword" className="block text-base font-medium text-text">
                   New Password
                 </label>
                 <div className="relative">
@@ -397,7 +397,7 @@ export default function ResetPasswordPage() {
 
               {/* Confirm Password field */}
               <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-text">
+                <label htmlFor="confirmPassword" className="block text-base font-medium text-text">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -425,7 +425,7 @@ export default function ResetPasswordPage() {
                 <Button
                   type="submit"
                   disabled={state.isLoading}
-                  className={`w-full py-2 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] ${state.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full py-4 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] ${state.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {state.isLoading ? (
                     <div className="flex items-center">

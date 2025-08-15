@@ -204,7 +204,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-text"
+                  className="block text-base font-medium text-text"
                 >
                   Email Address
                 </label>
@@ -239,7 +239,7 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-text"
+                    className="block text-base font-medium text-text"
                   >
                     Password
                   </label>
@@ -303,7 +303,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={state.isLoading}
-                  className={`w-full py-2 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] ${
+                  className={`w-full py-4 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] ${
                     state.isLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
@@ -349,7 +349,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <Button variant="outline" type="button" className="w-full my-2 bg-gray-300/60 border-0">
+                <Button variant="outline" type="button" className="w-full my-2 py-4 px-6 bg-gray-300/60 border-0">
                   <FcGoogle className="mr-2" size={28} />
                   <span className="text-sm font-medium">
                     Sign in with Google

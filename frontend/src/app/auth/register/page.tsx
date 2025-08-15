@@ -309,14 +309,14 @@ export default function RegisterPage() {
                     onClick={handleResendVerification}
                     disabled={state.isLoading}
                     variant="outline"
-                    className="w-full py-2 px-4 text-sm rounded-md font-medium transition-all duration-75 ease-linear"
+                    className="w-full py-4 px-6 text-sm rounded-md font-medium transition-all duration-75 ease-linear"
                   >
                     {state.isLoading ? 'Sending...' : 'Resend Verification Email'}
                   </Button>
 
                   <Button
                     asChild
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-md text-sm font-medium transition-all ease-linear duration-75"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 px-6 rounded-md text-sm font-medium transition-all ease-linear duration-75"
                   >
                     <Link href="/auth/login">
                       Go to Login
@@ -344,7 +344,7 @@ export default function RegisterPage() {
             <form method="post" className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-5">
                 <div className="space-y-2">
-                  <label htmlFor="firstName" className="block text-sm font-medium text-text">
+                  <label htmlFor="firstName" className="block text-base font-medium text-text">
                     First Name
                   </label>
                   <div>
@@ -370,7 +370,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="lastName" className="block text-sm font-medium text-text">
+                  <label htmlFor="lastName" className="block text-base font-medium text-text">
                     Last Name
                   </label>
                   <div>
@@ -398,7 +398,7 @@ export default function RegisterPage() {
 
               {/* Email field */}
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-text">
+                <label htmlFor="email" className="block text-base font-medium text-text">
                   Email Address
                 </label>
                 <div>
@@ -428,7 +428,7 @@ export default function RegisterPage() {
               {/* Password field */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="password" className="block text-sm font-medium text-text">
+                  <label htmlFor="password" className="block text-base font-medium text-text">
                     Password
                   </label>
                 </div>
@@ -511,7 +511,7 @@ export default function RegisterPage() {
                             {/* Confirm Password */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-text">
+                  <label htmlFor="confirmPassword" className="block text-base font-medium text-text">
                     Confirm Password
                   </label>
                 </div>
@@ -562,7 +562,7 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   disabled={state.isLoading}
-                  className={`w-full py-2 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] ${state.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full py-4 px-6 text-white rounded-md text-sm font-medium transition-all duration-200 ease-linear bg-gradient-to-r from-[rgba(222,69,97,1)] to-[rgba(224,56,84,1)] hover:from-[rgba(200,60,85,1)] hover:to-[rgba(202,50,75,1)] ${state.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {state.isLoading ? (
                     <div className="flex items-center">
@@ -606,7 +606,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <Button variant="outline" type="button" className="w-full my-2 bg-gray-300/60 border-0">
+                <Button variant="outline" type="button" className="w-full my-2 py-4 px-6 bg-gray-300/60 border-0">
                   <FcGoogle className="mr-2" size={28} />
                   <span className='text-sm font-medium'>Sign in with Google</span>
                 </Button>

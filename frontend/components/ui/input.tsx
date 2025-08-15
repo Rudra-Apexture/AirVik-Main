@@ -11,7 +11,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       <input
         type={type}
         className={cn(
-          "flex px-4 py-3 w-full rounded-lg border ease-linear duration-75 bg-transparent text-base transition-colors file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-500",
+          "flex px-5 py-4 w-full rounded-lg border ease-linear duration-75 bg-transparent text-base transition-colors file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-500",
           // Only apply focus border if there's no error border
           !hasErrorBorder && "focus:border-[#2f2f2f]",
           // Apply hover effect even when custom className is provided
