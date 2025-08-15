@@ -1,4 +1,4 @@
-// User Registration & Email Verification API Service
+// User Authentication API Service
 // Frontend service for authentication API calls
 // Must follow API-CONTRACT.md exactly
 
@@ -9,6 +9,16 @@ import {
   VerifyEmailResponse,
   ResendVerificationRequest,
   ResendVerificationResponse,
+  LoginRequest,
+  LoginResponse,
+  LogoutRequest,
+  LogoutResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  RequestPasswordResetRequest,
+  RequestPasswordResetSuccessData,
+  ResetPasswordRequest,
+  ResetPasswordSuccessData,
   ApiResponse,
   ApiSuccessResponse,
   ApiErrorResponse
@@ -36,7 +46,12 @@ const API_CONFIG = {
 const AUTH_ENDPOINTS = {
   register: '/api/v1/auth/register',
   verifyEmail: '/api/v1/auth/verify-email',
-  resendVerification: '/api/v1/auth/resend-verification'
+  resendVerification: '/api/v1/auth/resend-verification',
+  login: '/api/v1/auth/login',
+  logout: '/api/v1/auth/logout',
+  refreshToken: '/api/v1/auth/refresh-token',
+  requestPasswordReset: '/api/v1/auth/request-password-reset',
+  resetPassword: '/api/v1/auth/reset-password'
 } as const;
 
 // ============================================================================
@@ -45,19 +60,36 @@ const AUTH_ENDPOINTS = {
 
 /**
  * Creates a fetch request with proper configuration
+ * Handles authentication, token refresh, and request timeouts
  */
 async function createApiRequest(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  accessToken?: string
 ): Promise<Response> {
   const url = `${API_CONFIG.baseUrl}${endpoint}`;
   
+  const headers: Record<string, string> = {
+    ...API_CONFIG.headers,
+    ...(options.headers as Record<string, string> || {})
+  };
+  
+  // If no access token is provided, try to get it from storage
+  if (!accessToken && !endpoint.includes('/login') && !endpoint.includes('/refresh-token')) {
+    const tokens = getStoredTokens();
+    if (tokens.accessToken) {
+      accessToken = tokens.accessToken;
+    }
+  }
+  
+  // Add authorization header if access token is available
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
   const config: RequestInit = {
     ...options,
-    headers: {
-      ...API_CONFIG.headers,
-      ...options.headers
-    }
+    headers
   };
 
   // Add timeout using AbortController
@@ -65,15 +97,54 @@ async function createApiRequest(
   const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
   
   try {
+    
     const response = await fetch(url, {
       ...config,
       signal: controller.signal
     });
     
+    
     clearTimeout(timeoutId);
+    
+    // Handle 401 errors for token refresh
+    if (response.status === 401 && !endpoint.includes('/refresh-token') && !endpoint.includes('/logout')) {
+      
+      const refreshResult = await handleTokenRefresh();
+      
+      if (refreshResult.success && refreshResult.data && refreshResult.data.accessToken) {
+        
+        // Retry the original request with new token
+        return createApiRequest(
+          endpoint,
+          options,
+          refreshResult.data.accessToken
+        );
+      } else {
+        console.warn('Token refresh failed, redirecting to login');
+        
+        // If we're in a browser context, redirect to login
+        if (typeof window !== 'undefined') {
+          // Small delay to allow for any pending operations
+          setTimeout(() => {
+            window.location.href = '/auth/login';
+          }, 100);
+        }
+      }
+    }
+    
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
+    
+    // Log network errors
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('Network error during API request:', error);
+    } else if (error instanceof Error && error.name === 'AbortError') {
+      console.error('Request timeout after', API_CONFIG.timeout, 'ms');
+    } else {
+      console.error('API request error:', error);
+    }
+    
     throw error;
   }
 }
@@ -90,6 +161,14 @@ async function handleApiResponse<T>(response: Response): Promise<ApiResponse<T>>
       throw new Error('Invalid API response format: missing success field');
     }
     
+    // Add HTTP status code to error responses
+    if (!data.success) {
+      return {
+        ...data,
+        status: response.status
+      } as ApiErrorResponse;
+    }
+    
     return data as ApiResponse<T>;
   } catch (error) {
     // Handle JSON parsing errors
@@ -97,7 +176,8 @@ async function handleApiResponse<T>(response: Response): Promise<ApiResponse<T>>
       return {
         success: false,
         error: 'Invalid response format from server',
-        code: 'INVALID_RESPONSE'
+        code: 'INVALID_RESPONSE',
+        status: response.status
       } as ApiErrorResponse;
     }
     
@@ -113,7 +193,8 @@ function createNetworkErrorResponse(error: unknown): ApiErrorResponse {
     return {
       success: false,
       error: 'Network error. Please check your internet connection.',
-      code: 'NETWORK_ERROR'
+      code: 'NETWORK_ERROR',
+      status: 0 // Standard status code for network errors
     };
   }
   
@@ -121,14 +202,16 @@ function createNetworkErrorResponse(error: unknown): ApiErrorResponse {
     return {
       success: false,
       error: 'Request timeout. Please try again.',
-      code: 'TIMEOUT_ERROR'
+      code: 'TIMEOUT_ERROR',
+      status: 408 // Request Timeout
     };
   }
   
   return {
     success: false,
     error: 'An unexpected error occurred. Please try again.',
-    code: 'UNKNOWN_ERROR'
+    code: 'UNKNOWN_ERROR',
+    status: 500 // Internal Server Error as fallback
   };
 }
 
@@ -287,6 +370,510 @@ export async function resendVerification(
 }
 
 // ============================================================================
+// TOKEN MANAGEMENT FUNCTIONS
+// ============================================================================
+
+/**
+ * Storage keys for tokens
+ */
+const TOKEN_STORAGE = {
+  accessToken: 'airvik_access_token',
+  refreshToken: 'airvik_refresh_token'
+} as const;
+
+/**
+ * Store authentication tokens securely
+ * 
+ * @param accessToken - JWT access token
+ * @param refreshToken - JWT refresh token
+ */
+export function setStoredTokens(accessToken: string, refreshToken: string): void {
+  try {
+    // Store access token in memory (session storage)
+    // This is more secure as it's cleared when browser is closed
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(TOKEN_STORAGE.accessToken, accessToken);
+    }
+    
+    // Store refresh token in localStorage for persistence
+    // In a production app, consider using httpOnly cookies instead
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(TOKEN_STORAGE.refreshToken, refreshToken);
+    }
+  } catch (error) {
+    console.error('Error storing authentication tokens:', error);
+  }
+}
+
+/**
+ * Retrieve stored authentication tokens
+ * 
+ * @returns Object containing accessToken and refreshToken if available
+ */
+export function getStoredTokens(): { accessToken?: string; refreshToken?: string } {
+  try {
+    let accessToken: string | null = null;
+    let refreshToken: string | null = null;
+    
+    // Get access token from session storage
+    if (typeof sessionStorage !== 'undefined') {
+      accessToken = sessionStorage.getItem(TOKEN_STORAGE.accessToken);
+    }
+    
+    // Get refresh token from local storage
+    if (typeof localStorage !== 'undefined') {
+      refreshToken = localStorage.getItem(TOKEN_STORAGE.refreshToken);
+    }
+    
+    return {
+      accessToken: accessToken || undefined,
+      refreshToken: refreshToken || undefined
+    };
+  } catch (error) {
+    console.error('Error retrieving authentication tokens:', error);
+    return {};
+  }
+}
+
+/**
+ * Clear all stored authentication tokens
+ */
+export function clearStoredTokens(): void {
+  try {
+    // Clear access token from session storage
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(TOKEN_STORAGE.accessToken);
+    }
+    
+    // Clear refresh token from local storage
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(TOKEN_STORAGE.refreshToken);
+    }
+  } catch (error) {
+    console.error('Error clearing authentication tokens:', error);
+  }
+}
+
+/**
+ * Handle token refresh when access token expires
+ * 
+ * @returns Promise<RefreshTokenResponse> - New tokens or error
+ */
+async function handleTokenRefresh(): Promise<RefreshTokenResponse> {
+  try {
+    const { refreshToken: storedRefreshToken } = getStoredTokens();
+    
+    if (!storedRefreshToken) {
+      console.warn('Token refresh attempted but no refresh token available');
+      clearStoredTokens(); // Clear any remaining tokens
+      return {
+        success: false,
+        error: 'No refresh token available. Please login again.',
+        code: 'INVALID_REFRESH_TOKEN'
+      };
+    }
+    
+    // Make direct API call to refresh token endpoint to avoid circular dependency
+    const response = await fetch(`${API_CONFIG.baseUrl}${AUTH_ENDPOINTS.refreshToken}`, {
+      method: 'POST',
+      headers: API_CONFIG.headers,
+      body: JSON.stringify({ refreshToken: storedRefreshToken })
+    });
+    
+    if (!response.ok) {
+      // Handle non-200 responses
+      const errorData = await response.json().catch(() => ({}));
+      console.warn('Token refresh failed:', response.status, errorData);
+      clearStoredTokens();
+      
+      return {
+        success: false,
+        error: errorData.error || 'Failed to refresh authentication token',
+        code: errorData.code || 'REFRESH_TOKEN_FAILED'
+      };
+    }
+    
+    const result = await response.json();
+    
+    if (result.success && result.data && result.data.accessToken && result.data.refreshToken) {
+      // Store new tokens
+      setStoredTokens(result.data.accessToken, result.data.refreshToken);
+      return result as RefreshTokenResponse;
+    } else {
+      // Invalid response format
+      console.error('Invalid token refresh response format:', result);
+      clearStoredTokens();
+      return {
+        success: false,
+        error: 'Invalid response from authentication server',
+        code: 'INVALID_RESPONSE_FORMAT'
+      };
+    }
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    clearStoredTokens();
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to refresh authentication',
+      code: 'REFRESH_TOKEN_ERROR'
+    };
+  }
+}
+
+// ============================================================================
+// LOGIN/LOGOUT API FUNCTIONS
+// ============================================================================
+
+/**
+ * Login user with email and password
+ * 
+ * @param data - Login request data with email and password
+ * @returns Promise<LoginResponse> - API response with user data and tokens or error
+ * 
+ * @example
+ * ```typescript
+ * const result = await loginUser({
+ *   email: 'john@example.com',
+ *   password: 'SecurePass123'
+ * });
+ * 
+ * if (result.success) {
+ *   console.log('Login successful:', result.data.user);
+ *   // Tokens are automatically stored
+ * } else {
+ *   console.error('Login failed:', result.error);
+ * }
+ * ```
+ */
+export async function loginUser(data: LoginRequest): Promise<LoginResponse> {
+  try {
+    // Debug: Log the login request data received by the service
+    
+    // Validate required fields
+    validateRequestData(data, ['email', 'password']);
+    
+    // Debug: Log after validation
+    
+    // Make API request
+    const requestBody = JSON.stringify(data);
+    
+    const response = await createApiRequest(AUTH_ENDPOINTS.login, {
+      method: 'POST',
+      body: requestBody
+    });
+    
+    // Debug: Log raw response
+    
+    // Handle response
+    const result = await handleApiResponse<{
+      user: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        isEmailVerified: boolean;
+        createdAt: string;
+        updatedAt: string;
+      };
+      accessToken: string;
+      refreshToken: string;
+    }>(response);
+    
+    // Debug: Log processed response
+    
+    // Store tokens if login successful
+    if (result.success) {
+      setStoredTokens(result.data.accessToken, result.data.refreshToken);
+    }
+    
+    return result as LoginResponse;
+    
+  } catch (error) {
+    console.error('Login API error:', error);
+    // Debug: Log more detailed error information
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    return createNetworkErrorResponse(error);
+  }
+}
+
+/**
+ * Logout user and invalidate refresh token
+ * 
+ * @param data - Logout request data with refreshToken
+ * @returns Promise<LogoutResponse> - API response with success/error message
+ * 
+ * @example
+ * ```typescript
+ * const { refreshToken } = getStoredTokens();
+ * 
+ * if (refreshToken) {
+ *   const result = await logoutUser({ refreshToken });
+ *   
+ *   if (result.success) {
+ *     console.log('Logout successful');
+ *     // Tokens are automatically cleared
+ *   } else {
+ *     console.error('Logout failed:', result.error);
+ *   }
+ * }
+ * ```
+ */
+export async function logoutUser(data: LogoutRequest): Promise<LogoutResponse> {
+  try {
+    // Validate required fields
+    validateRequestData(data, ['refreshToken']);
+    
+    // Get access token for authorization header
+    const { accessToken } = getStoredTokens();
+    
+    // Make API request
+    const response = await createApiRequest(
+      AUTH_ENDPOINTS.logout,
+      {
+        method: 'POST',
+        body: JSON.stringify(data)
+      },
+      accessToken
+    );
+    
+    // Handle response
+    const result = await handleApiResponse<Record<string, never>>(response);
+    
+    // Clear tokens regardless of logout result
+    // This ensures user is logged out on frontend even if backend fails
+    clearStoredTokens();
+    
+    return result as LogoutResponse;
+    
+  } catch (error) {
+    console.error('Logout API error:', error);
+    // Clear tokens even on error
+    clearStoredTokens();
+    return createNetworkErrorResponse(error);
+  }
+}
+
+/**
+ * Refresh access token using refresh token
+ * 
+ * @param data - Refresh token request data
+ * @returns Promise<RefreshTokenResponse> - API response with new tokens or error
+ * 
+ * @example
+ * ```typescript
+ * const { refreshToken } = getStoredTokens();
+ * 
+ * if (refreshToken) {
+ *   const result = await refreshToken({ refreshToken });
+ *   
+ *   if (result.success) {
+ *     console.log('Token refresh successful');
+ *     // New tokens are automatically stored
+ *   } else {
+ *     console.error('Token refresh failed:', result.error);
+ *   }
+ * }
+ * ```
+ */
+export async function refreshToken(data: RefreshTokenRequest): Promise<RefreshTokenResponse> {
+  try {
+    // Validate required fields
+    validateRequestData(data, ['refreshToken']);
+    
+    // Make API request
+    const response = await createApiRequest(AUTH_ENDPOINTS.refreshToken, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    
+    // Handle response
+    const result = await handleApiResponse<{
+      accessToken: string;
+      refreshToken: string;
+    }>(response);
+    
+    // Store new tokens if refresh successful
+    if (result.success) {
+      setStoredTokens(result.data.accessToken, result.data.refreshToken);
+    }
+    
+    return result as RefreshTokenResponse;
+    
+  } catch (error) {
+    console.error('Token refresh API error:', error);
+    return createNetworkErrorResponse(error);
+  }
+}
+
+/**
+ * Request a password reset email
+ * 
+ * @param email - User email address
+ * @returns Promise<ApiResponse<RequestPasswordResetSuccessData>> - API response with success or error
+ * 
+ * @example
+ * ```typescript
+ * const result = await requestPasswordReset('user@example.com');
+ * 
+ * if (result.success) {
+ *   console.log('Password reset email sent');
+ * } else {
+ *   console.error('Password reset request failed:', result.error);
+ * }
+ * ```
+ */
+export async function requestPasswordReset(email: string): Promise<ApiResponse<RequestPasswordResetSuccessData>> {
+  try {
+    // Validate email
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return {
+        success: false,
+        error: 'Valid email address is required',
+        code: 'VALIDATION_ERROR'
+      };
+    }
+    
+    // Make API request
+    const response = await createApiRequest(AUTH_ENDPOINTS.requestPasswordReset, {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+    
+    // Handle response
+    return await handleApiResponse<RequestPasswordResetSuccessData>(response);
+    
+  } catch (error) {
+    console.error('Password reset request API error:', error);
+    return createNetworkErrorResponse(error);
+  }
+}
+
+/**
+ * Reset password with token
+ * 
+ * @param data - Reset password request data with token and new password
+ * @returns Promise<ApiResponse<ResetPasswordSuccessData>> - API response with success or error
+ * 
+ * @example
+ * ```typescript
+ * const result = await resetPassword({
+ *   token: 'reset-token-from-email',
+ *   newPassword: 'NewSecurePassword123!',
+ *   confirmPassword: 'NewSecurePassword123!'
+ * });
+ * 
+ * if (result.success) {
+ *   console.log('Password reset successful');
+ * } else {
+ *   console.error('Password reset failed:', result.error);
+ * }
+ * ```
+ */
+export async function resetPassword(data: ResetPasswordRequest): Promise<ApiResponse<ResetPasswordSuccessData>> {
+  try {
+    // Validate required fields
+    validateRequestData(data, ['token', 'newPassword', 'confirmPassword']);
+    
+    // Validate password match
+    if (data.newPassword !== data.confirmPassword) {
+      return {
+        success: false,
+        error: 'Passwords do not match',
+        code: 'PASSWORD_MISMATCH',
+        status: 400
+      };
+    }
+    
+    // Make API request
+    // Include all required fields: token, newPassword, and confirmPassword
+    const { token, newPassword, confirmPassword } = data;
+    
+    const response = await createApiRequest(AUTH_ENDPOINTS.resetPassword, {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword, confirmPassword })
+    });
+    
+    // Log response status for debugging
+    
+    // Handle specific HTTP status codes
+    if (response.status === 404) {
+      return {
+        success: false,
+        error: 'The password reset token was not found. Please request a new password reset link.',
+        code: 'TOKEN_NOT_FOUND',
+        status: 404
+      };
+    }
+    
+    if (response.status === 400) {
+      // Try to parse the response to get more specific error
+      try {
+        const errorData = await response.clone().json();
+        
+        if (errorData && !errorData.success) {
+          // Extract the error code if available
+          const errorCode = errorData.code || '';
+          const errorMessage = errorData.error || 'Invalid request';
+          
+          // Check for common error patterns
+          if (errorMessage.toLowerCase().includes('expired')) {
+            return {
+              success: false,
+              error: 'The password reset link has expired. Please request a new one.',
+              code: 'TOKEN_EXPIRED',
+              status: 400
+            };
+          } else if (errorMessage.toLowerCase().includes('invalid') && errorMessage.toLowerCase().includes('token')) {
+            return {
+              success: false,
+              error: 'The password reset link is invalid. Please request a new one.',
+              code: 'INVALID_TOKEN',
+              status: 400
+            };
+          } else if (errorMessage.toLowerCase().includes('password') && errorMessage.toLowerCase().includes('match')) {
+            return {
+              success: false,
+              error: 'Passwords do not match. Please try again.',
+              code: 'PASSWORD_MISMATCH',
+              status: 400
+            };
+          } else if (errorMessage.toLowerCase().includes('weak') || errorMessage.toLowerCase().includes('strength')) {
+            return {
+              success: false,
+              error: 'Password is too weak. It must contain at least 8 characters, including uppercase, lowercase, and numbers.',
+              code: 'PASSWORD_WEAK',
+              status: 400
+            };
+          }
+          
+          // Return the original error with status code
+          return {
+            success: false,
+            error: errorMessage,
+            code: errorCode || 'VALIDATION_ERROR',
+            status: 400
+          };
+        }
+      } catch (e) {
+        console.error('Error parsing 400 response:', e);
+        // Ignore parsing errors and continue with normal flow
+      }
+    }
+    
+    // Handle response
+    return await handleApiResponse<ResetPasswordSuccessData>(response);
+    
+  } catch (error) {
+    console.error('Password reset API error:', error);
+    return createNetworkErrorResponse(error);
+  }
+}
+
+// ============================================================================
 // AUTH SERVICE CLASS (OPTIONAL ALTERNATIVE INTERFACE)
 // ============================================================================
 
@@ -332,6 +919,41 @@ export class AuthService {
   public async resendVerification(data: ResendVerificationRequest): Promise<ResendVerificationResponse> {
     return resendVerification(data);
   }
+  
+  /**
+   * Login user with email and password
+   */
+  public async loginUser(data: LoginRequest): Promise<LoginResponse> {
+    return loginUser(data);
+  }
+  
+  /**
+   * Logout user and invalidate refresh token
+   */
+  public async logoutUser(data: LogoutRequest): Promise<LogoutResponse> {
+    return logoutUser(data);
+  }
+  
+  /**
+   * Refresh access token using refresh token
+   */
+  public async refreshToken(data: RefreshTokenRequest): Promise<RefreshTokenResponse> {
+    return refreshToken(data);
+  }
+
+  /**
+   * Request a password reset email
+   */
+  public async requestPasswordReset(email: string): Promise<ApiResponse<RequestPasswordResetSuccessData>> {
+    return requestPasswordReset(email);
+  }
+
+  /**
+   * Reset password with token
+   */
+  public async resetPassword(data: ResetPasswordRequest): Promise<ApiResponse<ResetPasswordSuccessData>> {
+    return resetPassword(data);
+  }
 }
 
 // ============================================================================
@@ -349,7 +971,15 @@ export const authService = AuthService.getInstance();
 export const authApi = {
   registerUser,
   verifyEmail,
-  resendVerification
+  resendVerification,
+  loginUser,
+  logoutUser,
+  refreshToken,
+  requestPasswordReset,
+  resetPassword,
+  getStoredTokens,
+  setStoredTokens,
+  clearStoredTokens
 } as const;
 
 // ============================================================================
@@ -394,6 +1024,12 @@ export function getErrorMessage(response: ApiErrorResponse): string {
       return 'No account found with this email address.';
     case 'USER_NOT_FOUND':
       return 'User account not found.';
+    case 'INVALID_CREDENTIALS':
+      return 'Invalid email or password. Please try again.';
+    case 'EMAIL_NOT_VERIFIED':
+      return 'Email not verified. Please verify your email first.';
+    case 'INVALID_REFRESH_TOKEN':
+      return 'Your session has expired. Please log in again.';
     case 'NETWORK_ERROR':
       return 'Network connection failed. Please check your internet connection and try again.';
     case 'TIMEOUT_ERROR':
@@ -457,8 +1093,6 @@ export function logApiConfig(): void {
   }
   
   console.group('Auth API Configuration');
-  console.log('Base URL:', API_CONFIG.baseUrl);
-  console.log('Timeout:', API_CONFIG.timeout);
-  console.log('Endpoints:', AUTH_ENDPOINTS);
+  // Base URL, timeout and endpoints logging removed
   console.groupEnd();
 }

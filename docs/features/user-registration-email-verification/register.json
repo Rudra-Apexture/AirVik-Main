@@ -1,0 +1,127 @@
+{
+  "layout": {
+    "grid": "grid grid-cols-1 lg:grid-cols-2",
+    "spacing": {
+      "container": "p-4 sm:p-6 md:p-8",
+      "form": "space-y-6",
+      "section": "space-y-4",
+      "field": "space-y-2"
+    }
+  },
+  "typography": {
+    "fontFamily": "font-sans",
+    "sizes": {
+      "heading": {
+        "main": "text-2xl font-bold",
+        "subtitle": "text-sm"
+      },
+      "body": "text-sm",
+      "label": "text-sm font-medium",
+      "input": "text-sm",
+      "error": "text-xs",
+      "link": "text-sm font-medium"
+    },
+    "weights": {
+      "regular": "font-normal",
+      "medium": "font-medium",
+      "bold": "font-bold"
+    }
+  },
+  "colors": {
+    "primary": "hsl(var(--primary))",
+    "primary-foreground": "hsl(var(--primary-foreground))",
+    "text": "var(--color-text)",
+    "muted": "var(--color-muted)",
+    "background": {
+      "page": "bg-white",
+      "card": "bg-white",
+      "input": "bg-white",
+      "success": "bg-green-100"
+    },
+    "border": {
+      "default": "border-gray-300",
+      "focus": "focus:border-primary",
+      "error": "border-red-500"
+    },
+    "icon": {
+      "default": "text-gray-500",
+      "success": "text-green-600"
+    }
+  },
+  "components": {
+    "Card": {
+      "padding": "p-6 sm:p-8",
+      "background": "bg-white",
+      "border": "border border-gray-200",
+      "shadow": "shadow-md"
+    },
+    "Button/Primary": {
+      "padding": "py-2 px-4",
+      "background": "bg-primary hover:bg-primary/90",
+      "text": "text-primary-foreground",
+      "radius": "rounded-md",
+      "states": {
+        "disabled": "opacity-50 cursor-not-allowed",
+        "loading": "opacity-80"
+      }
+    },
+    "Button/Social": {
+      "padding": "py-2 px-4",
+      "background": "bg-white",
+      "text": "text-text",
+      "border": "border border-gray-300",
+      "radius": "rounded-md",
+      "hover": "hover:bg-gray-50"
+    },
+    "Input/Text": {
+      "padding": "px-3 py-2",
+      "background": "bg-white",
+      "border": "border border-gray-300",
+      "radius": "rounded-md",
+      "states": {
+        "focus": "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+        "error": "border-red-500",
+        "disabled": "bg-gray-100 opacity-70 cursor-not-allowed"
+      }
+    },
+    "Form/Divider": {
+      "line": "border-t border-gray-300",
+      "text": "text-sm text-muted bg-white px-2"
+    },
+    "Checkbox": {
+      "size": "h-4 w-4",
+      "color": "text-primary",
+      "border": "border-gray-300 rounded"
+    }
+  },
+  "effects": {
+    "shadow/card": "shadow-md",
+    "shadow/button": "shadow-sm",
+    "radius": {
+      "default": "rounded-md",
+      "full": "rounded-full",
+      "sm": "rounded-sm",
+      "lg": "rounded-lg"
+    },
+    "transition": "transition-all duration-200"
+  },
+  "layout/register": {
+    "container": "min-h-screen flex flex-col lg:flex-row",
+    "form-side": "flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 lg:flex-none",
+    "image-side": "hidden lg:block lg:flex-1 bg-cover bg-center",
+    "form-container": "max-w-md w-full mx-auto",
+    "logo-container": "flex justify-start mb-8",
+    "form-card": "bg-white p-6 sm:p-8 rounded-lg shadow-md",
+    "social-buttons": "grid grid-cols-1 gap-3 mt-6",
+    "divider": "relative my-6",
+    "divider-line": "absolute inset-0 flex items-center",
+    "divider-text": "relative flex justify-center text-sm",
+    "footer": "mt-6 text-center"
+  },
+  "testimonial": {
+    "container": "absolute bottom-8 right-8 max-w-sm bg-white/95 p-4 rounded-lg shadow-lg",
+    "rating": "flex items-center space-x-1 mb-2",
+    "star": "text-yellow-500",
+    "quote": "text-sm italic text-text"
+  }
+}

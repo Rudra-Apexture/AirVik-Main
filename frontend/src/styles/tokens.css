@@ -1,0 +1,27 @@
+/**
+ * Design tokens for Airvik Hotel System
+ * These CSS variables define the core design values used throughout the application
+ * and are referenced by Tailwind's theme configuration
+ */
+
+:root {
+  /* Colors */
+  --color-primary: #E61E4D;
+  --color-text: #222222;
+  --color-muted: #6a6a6a;
+  --color-neutral: #dddddd;
+  --color-gray-bg: #f7f7f7;
+  
+  /* Spacing and sizing */
+  --radius: 0.5rem;   /* 8px */
+  --space: 1rem;      /* Tailwind 4-scale */
+}
+
+/* Dark mode variant - can be toggled with .dark class */
+.dark:root {
+  --color-primary: #FF385C;
+  --color-text: #FFF;
+  --color-muted: #A0A0A0;
+  --color-neutral: #555;
+  --color-gray-bg: #333;
+}

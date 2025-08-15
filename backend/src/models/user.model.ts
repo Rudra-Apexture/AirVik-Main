@@ -1,15 +1,28 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
+// Refresh token interface
+export interface IRefreshToken {
+  token: string;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
 // User interface for TypeScript
 export interface IUser {
-  firstName: string;
-  lastName: string;
   email: string;
   password: string;
-  isEmailVerified: boolean;
-  emailVerificationToken?: string;
-  tokenExpiry?: Date;
+  name: string;
+  role: string;
+  isActive: boolean; // Used as isEmailVerified in API responses
+  emailVerificationToken?: string; // For email verification
+  tokenExpiry?: Date; // For token expiration
+  passwordResetToken?: string; // For password reset
+  passwordResetExpiry?: Date; // For password reset token expiration
+  refreshTokens: IRefreshToken[];
+  lastLoginAt?: Date;
+  loginAttempts: number;
+  lockUntil?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,25 +30,12 @@ export interface IUser {
 // User document interface extending Mongoose Document
 export interface IUserDocument extends IUser, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
+  isLocked(): boolean;
 }
 
 // User schema definition
 const userSchema = new Schema<IUserDocument>(
   {
-    firstName: {
-      type: String,
-      required: [true, 'First name is required'],
-      trim: true,
-      minlength: [2, 'First name must be at least 2 characters long'],
-      maxlength: [50, 'First name must be less than 50 characters']
-    },
-    lastName: {
-      type: String,
-      required: [true, 'Last name is required'],
-      trim: true,
-      minlength: [2, 'Last name must be at least 2 characters long'],
-      maxlength: [50, 'Last name must be less than 50 characters']
-    },
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -50,20 +50,60 @@ const userSchema = new Schema<IUserDocument>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters long'],
+      minlength: [6, 'Password must be at least 6 characters long'],
       select: false // Don't include password in queries by default
     },
-    isEmailVerified: {
+    name: {
+      type: String,
+      required: [true, 'Name is required'],
+      trim: true,
+      minlength: [2, 'Name must be at least 2 characters long'],
+      maxlength: [100, 'Name must be less than 100 characters']
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin', 'staff'],
+      default: 'user'
+    },
+    isActive: {
       type: Boolean,
-      default: false
+      default: true
     },
     emailVerificationToken: {
-      type: String,
-      select: false // Don't include token in queries by default
+      type: String
     },
     tokenExpiry: {
-      type: Date,
-      select: false // Don't include expiry in queries by default
+      type: Date
+    },
+    passwordResetToken: {
+      type: String
+    },
+    passwordResetExpiry: {
+      type: Date
+    },
+    refreshTokens: [{
+      token: {
+        type: String,
+        required: true
+      },
+      expiresAt: {
+        type: Date,
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    lastLoginAt: {
+      type: Date
+    },
+    loginAttempts: {
+      type: Number,
+      default: 0
+    },
+    lockUntil: {
+      type: Date
     }
   },
   {
@@ -72,8 +112,6 @@ const userSchema = new Schema<IUserDocument>(
       transform: function(doc, ret: any) {
         // Remove sensitive fields from JSON output
         if ('password' in ret) delete ret.password;
-        if ('emailVerificationToken' in ret) delete ret.emailVerificationToken;
-        if ('tokenExpiry' in ret) delete ret.tokenExpiry;
         if ('__v' in ret) delete ret.__v;
         // Convert _id to id
         if ('_id' in ret) {
@@ -115,17 +153,19 @@ userSchema.methods.comparePassword = async function(candidatePassword: string): 
   }
 };
 
+// Method to check if account is locked
+userSchema.methods.isLocked = function(): boolean {
+  return !!(this.lockUntil && this.lockUntil > new Date());
+};
+
 // Static method to find user by email with password field
 userSchema.statics.findByEmailWithPassword = function(email: string) {
   return this.findOne({ email }).select('+password');
 };
 
-// Static method to find user by verification token
-userSchema.statics.findByVerificationToken = function(token: string) {
-  return this.findOne({
-    emailVerificationToken: token,
-    tokenExpiry: { $gt: new Date() }
-  }).select('+emailVerificationToken +tokenExpiry');
+// Static method to find user by role
+userSchema.statics.findByRole = function(role: string) {
+  return this.find({ role });
 };
 
 // Create and export the User model
